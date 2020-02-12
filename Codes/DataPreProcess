@@ -1,0 +1,20 @@
+> partwithtt<-read.csv("/home/zkpk/apache-hive-2.1.1-bin/partwithtt.csv",sep="\> ,stringsAsFactors=FALSE)
+> colnames(partwithtt)<-c("securityid","tradetime","bidpx1")
+>partwithtt$tradetime<-as.character(partwithtt$tradetime)
+
+#OneWeek.png
+> g<-ggplot(data=partwithtt, aes(x=as.POSIXct(tradetime,format="%Y%m%d%H%M%S"), y=bidpx1))
+> g<-g+geom_line(aes(group=securityid,colour=securityid))
+> g<-g+xlab('tradetime')+ylab('bidpx1')
+> ggsave(g,file="OneWeek.png",width=12,height=8)
+
+> partwithtt_oneday<-read.csv("/home/zkpk/apache-hive-2.1.1-bin/partwithtt_oneday.csv",sep="\t",stringsAsFactors=FALSE)
+> colnames(partwithtt_oneday)<-c("securityid","tradetime","bidpx1")
+> partwithtt_oneday$tradetime<-as.character(partwithtt_oneday$tradetime)
+
+> g<-ggplot(data=partwithtt_oneday, aes(x=as.POSIXct(tradetime,format="%Y%m%d%H%M%S"), y=bidpx1))
+> g<-g+geom_line(aes(group=securityid,colour=securityid))
+> g<-g+xlab('tradetime')+ylab('bidpx1')
+> ggsave(g,file="02.png",width=12,height=8)
+
+
