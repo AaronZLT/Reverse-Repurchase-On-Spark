@@ -1,0 +1,74 @@
+> bidpx1<-read.csv("/home/zkpk/apache-hive-2.1.1-bin/partwithsttb.csv",sep="\t",stringsAsFactors=FALSE)
+> colnames(bidpx1)<-c("securityid","tradedate","tradetime","bidpx1")
+> bidpx1$tradedate<-as.character(bidpx1$tradedate)
+> bidpx1$tradetime<-as.character(bidpx1$tradetime)
+
+
+#Functions:
+> oneDay<-function(date){
++   d1<-bidpx1[which(bidpx1$tradedate==date),]
++   d1$tradetime2<-round( as.numeric(as.character(d1$tradetime))/100)*100#四舍五入，虽然在这没什么用，但加上更好
++   d1$tradetime2[which(d1$tradetime2<100000)]<-paste(0,d1$tradetime2[which(d1$tradetime2<100000)],sep="")#5位时间加0变6位，标准化
++   d1$tradetime2[which(d1$tradetime2=='1e+05')]='100000'#近似处理
++   d1$tradetime2[which(d1$tradetime2=='096000')]='100000'
++   d1$tradetime2[which(d1$tradetime2=='106000')]='110000'
++   d1$tradetime2[which(d1$tradetime2=='126000')]='130000'
++   d1$tradetime2[which(d1$tradetime2=='136000')]='140000'
++   d1$tradetime2[which(d1$tradetime2=='146000')]='150000'
++   d1
++ }
+> meanScale<-function(d1){
++   ddply(d1, .(securityid,tradetime2), summarize, bidpx1=mean(bidpx1))#将相同时间合并bidpx1成平均值，避免出现2个值
++ }
+> findPoint<-function(a1,a2){#找到所有a1>a2的点
++  bigger_point<-function(a1,a2){
++     idx<-c()
++     for(i in intersect(a1$tradetime2,a2$tradetime2)){#交集
++       i1<-which(a1$tradetime2==i)
++       i2<-which(a2$tradetime2==i)              
++       if(a1$bidpx1[i1]-a2$bidpx1[i2]>=-0.02){
++         idx<-c(idx,i1)
++       }
++     }
++     idx
++   }
++ remove_continuous_point<-function(idx){#去掉两个相似的点
++     idx[-which(idx-c(NA,rev(rev(idx)[-1]))==1)]
++   }
++ 
++   idx<-bigger_point(a1,a2)
++   remove_continuous_point(idx)
++ }
+> findOptimize<-function(d3){
++   idx2<-which((d3$bidpx1-c(NA,rev(rev(d3$bidpx1)[-1])))/d3$bidpx1>0.1)
++   if(length(idx2)<1)
++     print("No Optimize point")
++   d3[idx2,]
++ }
+> draw<-function(d2,d3,d4,date,png=FALSE){
++ g<-ggplot(data=d2, aes(x=as.POSIXct(paste(date,tradetime2,sep=""),format="%Y%m%d%H%M%S"), y=bidpx1))
++ g<-g+geom_line(aes(group=securityid,colour=securityid))
++ g<-g+geom_point(data=d3,aes(size=1.5,colour=securityid))
++ if(nrow(d4)>0){
++ g<-g+geom_text(data=d4,aes(label= format(d4$bidpx1,digits=4)),colour="blue",hjust=0, vjust=0)
++   }
++   g<-g+xlab('tradetime')+ylab('bidpx1')
++   if(png){
++     ggsave(g,file=paste(date,".png",sep=""),width=12,height=8)
++   }else{
++ }
++ }
+
+> process<-function(){
++ for(i in 20190922:20190926){
++ date<-i
++ d1<-oneDay(date)
++ d2<-meanScale(d1)
++ a1<-d2[which(d2$securityid==131810),]
++ a2<-d2[which(d2$securityid==204001),]
++ d3<-d2[findPoint(a1,a2),]
++ d4<-findOptimize(d3)
++ draw(d2,d3,d4,as.character(date),TRUE)
++ }
++ }
+

@@ -1,0 +1,52 @@
+create table total(
+    > tradedate string,
+    > tradetime string,
+    > securityid string,
+    > bidpx1 double,
+    > bidsize1 double,
+    > offerpx1 double,
+    > offersize1 double)
+    > row format delimited fields terminated by ',';
+
+hive> load data local inpath '/home/zkpk/Desktop/Finace/total.csv'
+    > overwrite into table total;
+
+create table totalwithtt(
+    > tradedate string,
+    > securityid string,
+    > bidpx1 double)
+    > row format delimited fields terminated by ',';
+create table partwithtt like totalwithtt;
+
+create table partwithsttb(
+    > tradedate string,
+    > tradetime string,
+    > securityid string,
+    > bidpx1 double)
+    > row format delimited fields terminated by ',';
+
+hive> insert into totalwithtt
+    > select securityid,concat(tradedate,tradetime) as tradedate,bidpx1
+    > from total
+    > where securityid in (131810,204001);
+
+hive> insert into partwithtt
+    > select securityid,tradedate,bidpx1
+    > from totalwithtt
+    > where securityid in (131810,204001);
+
+hive> insert into partwithsttb
+    > select securityid,tradedate,tradetime,bidpx1
+    > from total
+    > where securityid in (131810,204001);
+
+hive> create table partwithtt_oneday like partwithtt;
+hive> insert into partwithtt_oneday
+    > select securityid,concat(tradedate,tradetime) as tradetime,bidpx1
+    > from partwithsttb
+    > where tradedate=20190926;
+hive -e "select * from partwithtt_oneday;">partwithtt_oneday.csv
+
+
+
+

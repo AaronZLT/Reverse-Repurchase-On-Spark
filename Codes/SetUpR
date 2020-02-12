@@ -1,0 +1,6 @@
+yum install epel-release
+yum install R
+
+In R:
+
+install.packages("ggplot2", dependencies = TRUE)

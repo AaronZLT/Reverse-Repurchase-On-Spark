@@ -1,0 +1,3 @@
+hadoop-2.7.3/bin/namenode -format
+hadoop-2.7.3/sbin/start-all.sh
+
